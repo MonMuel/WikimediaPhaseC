@@ -1,0 +1,120 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Insertion des regroupements de styles -->
+    @Styles.Render("~/Content/css")
+</head>
+<body>
+
+    <div class="page">
+        @{
+            bool connected = Models.User.ConnectedUser != null;
+            Html.RenderPartial("_header");
+        }
+
+        <div id="contentPanel" class="content">
+            <div id="mainContentPanel" class="main roundedBorder scrollable">
+                @RenderBody()
+            </div>
+        </div>
+
+        <div id="footerPanel" class="section roundedBorder footerPanel">
+            &copy; @DateTime.Now.Year - Application Web - Wikimedia
+            <span id="pageNumber"></span>
+            <img src="/updatingView.gif"
+                 style="width:24px; display:none"
+                 id="updatingView"
+                 title="Rafraichissement de la vue" />
+        </div>
+
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- SignalR client library (must be loaded before the auto-generated hubs proxy) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.signalR/2.4.2/jquery.signalR.min.js"></script>
+    <script>
+        // load the auto-generated hubs proxy only after jquery.signalR is available
+        (function () {
+            function loadHubs() {
+                if (typeof $.signalR === 'undefined') {
+                    console.warn('jquery.signalR is not available, cannot load /signalr/hubs');
+                    return;
+                }
+                $.getScript('/signalr/hubs')
+                    .done(function () { console.log('/signalr/hubs loaded'); })
+                    .fail(function () { console.warn('Failed to load /signalr/hubs'); });
+            }
+            if (document.readyState === 'complete' || document.readyState === 'interactive') loadHubs();
+            else window.addEventListener('DOMContentLoaded', loadHubs);
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+
+    <!-- Insertion des regroupements de scripts -->
+    @Scripts.Render("~/bundles/validation")
+    <script src="/Scripts/medias-common.js"></script>
+    <script>
+        // expose connected user id to client scripts
+        window.ConnectedUserId = @((Models.User.ConnectedUser != null) ? Models.User.ConnectedUser.Id : 0);
+        // expose current media id (if any) so client can react to deletions
+        window.CurrentMediaId = @((Session["CurrentMediaId"] != null) ? (int)Session["CurrentMediaId"] : 0);
+
+        $(() => {
+            if ("@connected" != "False") StartNotificationsHandler();
+
+            // SignalR likes hub client setup
+            try {
+                var likesHub = $.connection.likesHub;
+                likesHub.client.mediaLiked = function (mediaId, count, userIds, userNames) {
+                    console.log('SignalR mediaLiked', mediaId, count, userIds, userNames);
+                    // update all matching like panels on the page
+                    $(".likePanel").each(function () {
+                        var panel = $(this);
+                        var btn = panel.find('.toggleLikeCmd');
+                        var mid = btn.attr('data-mediaid') || btn.data('mediaid');
+                        if (mid == mediaId || parseInt(mid) === mediaId) {
+                            panel.find('.likeCount').text(count);
+                            panel.attr('title', (userNames || []).join(', '));
+                            var icon = panel.find('.likeIcon img');
+                            var isLiked = (userIds || []).indexOf(window.ConnectedUserId) > -1;
+                            icon.attr('src', isLiked ? '/Content/UI-Images/heart_filled.svg' : '/Content/UI-Images/heart.svg');
+                            if (isLiked) btn.addClass('liked'); else btn.removeClass('liked');
+                        }
+                    });
+                    // end mediaLiked
+                };
+                likesHub.client.mediaDeleted = function(mediaId) {
+                    console.log('SignalR mediaDeleted', mediaId);
+                    // remove any media items in lists
+                    $(".mediaLayout").filter(function() {
+                        return $(this).data('mediaid') == mediaId;
+                    }).remove();
+                    // if currently viewing that media details, redirect to list
+                    try {
+                        if (window.CurrentMediaId && parseInt(window.CurrentMediaId) === parseInt(mediaId)) {
+                            window.location = '/Medias/List';
+                        }
+                    } catch(e) { }
+                };
+                };
+                $.connection.hub.start();
+            } catch (e) {
+                console.log('SignalR not available', e);
+            }
+        });
+    </script>
+    <!-- Insertion de script local aux vues -->
+    @RenderSection("scripts", required: false)
+
+
+</body>
+</html>

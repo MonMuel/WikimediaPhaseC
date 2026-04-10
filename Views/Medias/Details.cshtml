@@ -1,0 +1,78 @@
+﻿@model Models.Media
+@{
+    ViewBag.PageTitle = "Détails";
+    string search = Session["Search"] != null ? ((bool)Session["Search"]).ToString() : false.ToString();
+    string SearchString = Session["SearchString"] != null ? (string)Session["SearchString"] : "";
+}
+
+<div id="detailsPanel" class="detailsPanel">
+    <!-- initial server-side render as a fallback for clients with JS errors -->
+    @Html.Partial("GetMediaDetails", Model)
+</div>
+
+@section Scripts {
+    <script>
+        $(() => {
+            newSession(600);
+            setCurrentPageLimit()
+            mediaDetails_ARP = new AutoRefreshedPanel("detailsPanel", "/Medias/GetMediaDetails", 5, mediaDetailsPostRefresh);
+            // header auto refresher for likes panel
+            detailsHeader_ARP = new AutoRefreshedPanel("detailsHeader", "/Medias/GetMediaLikeHeader", 5, detailsHeaderPostRefresh);
+            sessionStorage.setItem("RestoreScrollPosition", "1");
+            // attach handlers to initial server-rendered header so like works without waiting for refresh
+            detailsHeaderPostRefresh();
+        })
+
+        function mediaDetailsPostRefresh() {
+            // todo
+            highlightKeyword();
+        }
+
+        function detailsHeaderPostRefresh() {
+            // delegated handler for header like button (delegate on document to ensure handlers fire even
+            // if the header is replaced or rendered before this script runs)
+            $(document).off('click', '#detailsHeader .toggleLikeCmd');
+            $(document).on('click', '#detailsHeader .toggleLikeCmd', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const btn = $(this);
+                const panel = btn.closest('.likePanel');
+                const countSpan = panel.find('.likeCount');
+                const iconImg = panel.find('.likeIcon img');
+                const idRaw = btn.attr('data-mediaid') || btn.data('mediaid');
+                const id = parseInt(idRaw, 10);
+                console.log('details header like click, mediaId=', id);
+
+                $.ajax({
+                    url: '/Medias/ToggleMediaLike/' + id,
+                    method: 'GET',
+                    success: function (res) {
+                        if (res && res.success) {
+                            countSpan.text(res.count);
+                            panel.attr('title', (res.users || []).join(', '));
+                            iconImg.attr('src', res.liked ? '/Content/UI-Images/heart_filled.svg' : '/Content/UI-Images/heart.svg');
+                            if (res.liked) btn.addClass('liked'); else btn.removeClass('liked');
+                        }
+                    },
+                    error: function () { alert('Erreur lors de l\'opération like.'); }
+                });
+            });
+        }
+
+        function highlightKeyword() {
+            if ("@search" == "True") {
+                let keyword = "@SearchString";
+                if (keyword.length > 0) {
+                     let titles = document.getElementsByClassName('mediaTitle');
+                     Array.from(titles).forEach(title => {
+                         highlight(keyword, title);
+                     });
+                     let descriptions = document.getElementsByClassName('mediaDescription');
+                     Array.from(descriptions).forEach(description => {
+                         highlight(keyword, description);
+                     })
+                }
+            }
+        }
+    </script>
+}

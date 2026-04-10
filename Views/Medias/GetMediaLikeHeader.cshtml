@@ -1,0 +1,23 @@
+@model Models.Media
+
+@if (Model != null)
+{
+    var connectedId = Models.User.ConnectedUser.Id;
+    var isVisible = Model.Shared || Models.User.ConnectedUser.IsAdmin || Model.OwnerId == connectedId;
+    if (isVisible)
+    {
+        var likedByNames = Model.LikedByUsers != null ? string.Join(", ", Model.LikedByUsers.Select(u => u.Name)) : "";
+        var likesCount = Model.LikesCount;
+        var connectedLiked = Model.Likes != null && Model.Likes.Contains(connectedId);
+        <div class="headerLikePanel" style="display:flex; align-items:center; gap:8px;">
+            <div class="likePanel" title="@likedByNames">
+                <span class="likeCount">@likesCount</span>
+                <button type="button" class="toggleLikeCmd likeButton @(connectedLiked ? "liked" : "")" data-mediaid="@Model.Id" aria-pressed="@(connectedLiked ? "true" : "false")">
+                    <span class="likeIcon">
+                        <img src="@(connectedLiked ? "/Content/UI-Images/heart_filled.svg" : "/Content/UI-Images/heart.svg")" alt="like" />
+                    </span>
+                </button>
+            </div>
+        </div>
+    }
+}

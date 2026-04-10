@@ -1,0 +1,121 @@
+.mediaListLayout {
+    display: grid;
+    grid-template-columns: 33% 33% 33%;
+    gap: 6px !important;
+}
+
+    .mediaListLayout a {
+        text-decoration: none;
+        cursor: pointer;
+        color: black;
+    }
+
+        .mediaListLayout a:hover {
+            background-color: aliceblue;
+        }
+
+@media screen and (max-width: 800px) {
+    .mediaListLayout {
+        grid-template-columns: 49.75% 49.75%;
+    }
+}
+
+@media screen and (max-width: 550px) {
+    .mediaListLayout {
+        grid-template-columns: 100%;
+    }
+}
+
+.mediaLayout {
+    border: 0.1px solid #ccc;
+    border-radius: 5px;
+
+    &:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+}
+
+.mediaThumbnail {
+    width: 100% !important;
+    aspect-ratio: 16/9;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: 0.1px solid #ccc;
+    background-size: cover;
+    background-position: center;
+}
+
+.mediaThumbnailBig {
+    width: 100% !important;
+    aspect-ratio: 16/9;
+    border-radius: 6px;
+}
+
+.mediaPlayerBig {
+    aspect-ratio: 16/9;
+    width: 100% !important;
+}
+
+.description {
+    font-size: 1em !important;
+}
+
+.highlight {
+    background-color: yellow;
+}
+
+/* Header search layout tweaks */
+.headerMenu .flex {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.headerMenu .flex .section.roundedBorder {
+    height: 38px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+}
+.headerMenu .flex select.section.roundedBorder {
+    min-width: 160px;
+}
+
+/* Badges on media thumbnails */
+.mediaThumbnail { position: relative; }
+.mediaThumbnail .UserSmallAvatar { 
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255,255,255,0.9);
+}
+.mediaThumbnail .sharedBadge { right: 46px; width: 30px; height: 30px; }
+.mediaThumbnail .ownerBadge { right: 6px; }
+
+/* Likes panel styling */
+.likePanel {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.likeCount {
+    color: #1e88e5;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+.likeButton {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+}
+.likeIcon img { width: 18px; height: 18px; display:block }
+.likeButton .likeIcon img { opacity: 0.9 }
+.likeButton.liked .likeIcon img, .likeButton:hover .likeIcon img { opacity: 1 }
+  

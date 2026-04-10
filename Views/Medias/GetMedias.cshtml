@@ -1,0 +1,51 @@
+﻿@model IEnumerable<Models.Media>
+
+@{
+    if (Model.Count() != 0)
+    {
+        int connectedId = Models.User.ConnectedUser.Id;
+        foreach (var media in Model)
+        {
+            bool writeAccess = Models.User.ConnectedUser.IsAdmin || media.OwnerId == connectedId;
+
+            <div class="mediaLayout" data-mediaid="@media.Id">
+                <a href="/Medias/Details/@media.Id" title="Voir les détails de @media.Title" style="text-decoration:none; width:100% !important">
+                    <div class="mediaThumbnail"
+                         style="background-image:url('https://img.youtube.com/vi/@media.YoutubeId/mqdefault.jpg'); padding:6px; display:flex; flex-flow:row-reverse ">
+                        <div class="UserSmallAvatar ownerBadge transparentBackground"
+                             style="background-image: url('@media.Owner.Avatar'); border:0.1px solid white;"
+                             title="Ajouté par @media.Owner.Name"></div>
+                        @if (writeAccess && media.Shared)
+                        {
+                            <div class="UserSmallAvatar sharedBadge transparentBackground" style="background-image: url('/Content/UI-Images/shared.png');" title="partagée"></div>
+                        }
+                    </div>
+                </a>
+
+                <div class="mediaTitle ellipsis" style="margin-left: 4px; margin-right: 4px; font-size: 0.8em; font-weight: bold">
+                    @media.Title
+                </div>
+                <div style="display: grid; grid-template-columns: auto 120px; align-items: last baseline ">
+
+                    <div style="margin-left: 4px; color: gray; font-size: 0.65em">@media.Category  @Helper.When(media.PublishDate) </div>
+                    @{ 
+                        var likedByNames = string.Join(", ", media.LikedByUsers.Select(u => u.Name));
+                        var likesCount = media.LikesCount;
+                        bool connectedLiked = media.Likes != null && media.Likes.Contains(connectedId);
+                    }
+                    <div style="display:flex; justify-content:flex-end; gap:10px; align-items:center; padding-right:6px">
+                        <div class="likePanel" title="@likedByNames">
+                            <span class="likeCount">@likesCount</span>
+                            <button type="button" class="toggleLikeCmd likeButton @(connectedLiked ? "liked" : "")" data-mediaid="@media.Id" aria-pressed="@(connectedLiked ? "true" : "false")">
+                                <span class="likeIcon">
+                                    <img src="@(connectedLiked ? "/Content/UI-Images/heart_filled.svg" : "/Content/UI-Images/heart.svg")" alt="like" />
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        }
+    }
+}
